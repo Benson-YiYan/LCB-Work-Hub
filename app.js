@@ -2247,8 +2247,12 @@ function showWebNotification(entry) {
   const body = document.createElement('div');
   body.className = 'web-notice-body';
   body.textContent = inboxText(entry);
+  const read = document.createElement('button');
+  read.type = 'button';
+  read.className = 'web-notice-read';
+  read.textContent = t('inbox.markRead');
   heading.append(title, close);
-  card.append(heading, body);
+  card.append(heading, body, read);
   root.appendChild(card);
   let removed = false;
   const dismiss = () => {
@@ -2258,6 +2262,14 @@ function showWebNotification(entry) {
     setTimeout(() => card.remove(), 220);
   };
   close.addEventListener('click', dismiss);
+  read.addEventListener('click', () => {
+    const user = currentUser();
+    if (user && markNotificationRead(entry.id, user.id)) {
+      pushRemote();
+      toast(t('toast.markedRead'));
+    }
+    dismiss();
+  });
   setTimeout(dismiss, 5000);
 }
 function go(hash) { location.hash = hash; }
