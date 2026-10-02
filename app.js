@@ -21,6 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
+const APP_VERSION = '202610021532';
 
 /* ------------------------------ 共享数据（Supabase） ------------------------------
    页面是纯静态的，所以要三个人共用一份数据，必须有个服务器那一侧。
@@ -2388,9 +2389,9 @@ function shell(route, content) {
   <div class="topbar ${state.mobileNavOpen?'mobile-nav-open':''}">
     <div class="topbar-inner">
       <button class="mobile-nav-toggle" type="button" data-action="mobile-nav-toggle" aria-expanded="${state.mobileNavOpen?'true':'false'}" aria-label="${esc(L({zh:'打开导航菜单',en:'Open navigation menu',es:'Abrir menú de navegación'}))}" title="${esc(L({zh:'导航菜单',en:'Navigation menu',es:'Menú de navegación'}))}"><span class="menu-glyph">☰</span>${unread?`<span class="nav-toggle-count">${unread}</span>`:''}</button>
-      <div class="logo"><div class="brand-mark">LCB</div><span>${esc(t(APP_TITLE_KEY))}</span></div>
+      <div class="logo"><div class="brand-mark">LCB</div><span class="logo-copy"><span>${esc(t(APP_TITLE_KEY))}</span><small class="app-version">${APP_VERSION}</small></span></div>
       <div class="nav-shell">
-        <div class="mobile-drawer-head"><b>${esc(t(APP_TITLE_KEY))}</b><button type="button" data-action="mobile-nav-close" aria-label="${esc(L({zh:'关闭导航菜单',en:'Close navigation menu',es:'Cerrar menú de navegación'}))}">×</button></div>
+        <div class="mobile-drawer-head"><span><b>${esc(t(APP_TITLE_KEY))}</b><small class="app-version">${APP_VERSION}</small></span><button type="button" data-action="mobile-nav-close" aria-label="${esc(L({zh:'关闭导航菜单',en:'Close navigation menu',es:'Cerrar menú de navegación'}))}">×</button></div>
         <button class="nav-scroll-btn" type="button" data-action="nav-scroll-left" aria-label="${esc(L({zh:'向左滚动导航',en:'Scroll navigation left',es:'Desplazar navegación a la izquierda'}))}" title="${esc(L({zh:'向左滚动',en:'Scroll left',es:'Desplazar a la izquierda'}))}">‹</button>
         <nav class="nav">${navFor(route)}</nav>
         <button class="nav-scroll-btn" type="button" data-action="nav-scroll-right" aria-label="${esc(L({zh:'向右滚动导航',en:'Scroll navigation right',es:'Desplazar navegación a la derecha'}))}" title="${esc(L({zh:'向右滚动',en:'Scroll right',es:'Desplazar a la derecha'}))}">›</button>
