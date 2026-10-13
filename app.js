@@ -21,7 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202610132120';
+const APP_VERSION = '202610132337';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
@@ -3145,7 +3145,7 @@ function legacySettings() {
               ${USERS.map(u => `<tr>
                 <td><b>${esc(u.name)}</b></td>
                 <td>${esc(u.email)}</td>
-                <td>${esc(t(u.roleKey))}</td>
+                <td>${esc(u.id === 'carol' ? L({zh:'管理员',en:'Administrator',es:'Administrador'}) : t(u.roleKey))}</td>
                 <td>${u.admin ? `<span class="yes">${esc(t('settings.admin'))}</span>` : esc(t('settings.member'))}</td>
               </tr>`).join('')}
             </tbody>
