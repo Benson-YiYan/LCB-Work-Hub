@@ -21,7 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202610132016';
+const APP_VERSION = '202610132034';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
@@ -2341,6 +2341,7 @@ function viewLogin() {
         <div class="brand-mark">LCB</div>
         <div>
           <h1>${esc(t(APP_TITLE_KEY))}</h1>
+          <small class="app-version">${APP_VERSION}</small>
           <div class="sub">${esc(t(TEAM_NAME_KEY))}</div>
         </div>
         <div style="margin-left:auto">${langSwitcher()}</div>
@@ -2404,7 +2405,53 @@ function syncBadge() {
 
 /* ------------------------------ 视图：外壳 ------------------------------ */
 
-function navFor(route) {
+const preferenceChecks=new Map();
+const preferenceRevisions=new Map();
+setInterval(()=>refreshAccountPreferences(),30000);
+const preferenceWrites=new Set();
+function preferenceKey(){const u=currentUser();return u?KEY.lang+':preferences:'+u.id:'';}
+function accountPreferences(){const key=preferenceKey();return LCBPersonalization.normalize(key?load(key,{}):{});}
+function applyAccountTheme(){
+  const value=accountPreferences().theme;
+  const family=false;
+  const theme=LCBPersonalization.theme(value,family);
+  const style=document.documentElement.style;
+  style.setProperty('--brand',theme.color);style.setProperty('--brand-soft',theme.soft);style.setProperty('--brand-gradient',theme.gradient);
+  style.setProperty('--brand-text',theme.text);
+  document.documentElement.classList.toggle('custom-theme',!!value);
+}
+async function refreshAccountPreferences(){
+  const key=preferenceKey();
+  if(!key||!REMOTE_ENABLED||!authSession||preferenceWrites.has(key)||Date.now()-(preferenceChecks.get(key)||0)<30000)return;
+  preferenceChecks.set(key,Date.now());
+  const revision=preferenceRevisions.get(key)||0;
+  try{
+    const r=await sbFetch('/rpc/lcb_get_user_preferences',{method:'POST',body:'{}'});
+    if(!r.ok)throw new Error('preferences-http-'+r.status);
+    const value=LCBPersonalization.normalize(await r.json());
+    if(preferenceKey()!==key||preferenceWrites.has(key)||(preferenceRevisions.get(key)||0)!==revision)return;
+    if(JSON.stringify(value)!==JSON.stringify(load(key,{}))){
+      save(key,value);applyAccountTheme();
+      if(!userIsInteracting())render();
+    }
+  }catch(e){preferenceChecks.set(key,0);}
+}
+async function saveAccountPreferences(value){
+  const key=preferenceKey();if(!key||preferenceWrites.has(key))return;
+  const normalized=LCBPersonalization.normalize(value);
+  preferenceWrites.add(key);
+  preferenceRevisions.set(key,(preferenceRevisions.get(key)||0)+1);
+  try{
+    if(REMOTE_ENABLED){
+      const r=await sbFetch('/rpc/lcb_set_user_preferences',{method:'POST',body:JSON.stringify({payload:normalized})});
+      if(!r.ok)throw new Error('preferences-http-'+r.status);
+    }
+    save(key,normalized);preferenceChecks.set(key,Date.now());
+    if(preferenceKey()===key){render();toast(L({zh:'设置已保存',en:'Settings saved',es:'Configuración guardada'}));}
+  }catch(e){showSystemError(e);}
+  finally{preferenceWrites.delete(key);}
+}
+function navigationItems() {
   const items = [
     ['#/', 'nav.dashboard'],
     ['#/search', null, L({zh:'全文搜索',en:'Search',es:'Búsqueda'})],
@@ -2419,7 +2466,11 @@ function navFor(route) {
     ['#/settings', 'nav.settings'],
     ['#/trash', 'nav.trash'],
   ];
-  const links = items.map(([href, key, label]) => {
+  return items;
+}
+function navFor(route) {
+  const groups=LCBPersonalization.partition(navigationItems(),accountPreferences().hidden);
+  const linksFor=items=>items.map(([href, key, label]) => {
     const active = (href === '#/' && (route === '/' || route === '')) || (href !== '#/' && route.startsWith(href.slice(1)));
     let badge = '';
     if (key === 'nav.matters') badge = `<span class="nav-count">${visibleMatters(currentUser()).length}</span>`;
@@ -2434,7 +2485,7 @@ function navFor(route) {
     return `<a href="${href}" data-action="mobile-nav-link" class="${active ? 'active' : ''}"><span class="nav-label">${esc(label || t(key))}${badge}</span></a>`;
   }).join('');
   const tutorialLabel = (BEGINNER_TUTORIAL[lang] || BEGINNER_TUTORIAL.zh).title;
-  return `${links}<button class="nav-tutorial" type="button" data-action="open-tutorial"><span class="nav-label">${esc(tutorialLabel)}</span></button>`;
+  return `${linksFor(groups.main)}${groups.more.length?'<details class="nav-more"><summary>'+esc(L({zh:'更多',en:'More',es:'Más'}))+'</summary>'+linksFor(groups.more)+'</details>':''}<button class="nav-tutorial" type="button" data-action="open-tutorial"><span class="nav-label">${esc(tutorialLabel)}</span></button>`;
 }
 
 function shell(route, content) {
@@ -3052,7 +3103,7 @@ function viewSettings() {
   }
   if(location.hash==='#/settings/records'&&!settingsRecords&&!settingsRecordsBusy)loadSettingsRecords();
   const defaults=team?'<div class="card card-pad"><div class="section-title">'+esc(t('settings.defaultTeam'))+'</div><table class="matrix"><thead><tr><th>'+esc(t('th.area'))+'</th>'+USERS.map(u=>'<th>'+esc(u.name)+'</th>').join('')+'</tr></thead><tbody>'+PRACTICE_AREAS.map(a=>'<tr><td>'+esc(areaName(a.id))+'</td>'+USERS.map(u=>'<td><input type="checkbox" data-action="set-default-team" data-area="'+a.id+'" data-user="'+u.id+'" '+(defaultTeam(a.id).includes(u.id)?'checked':'')+' '+(currentUser().id==='carol'?'':'disabled')+' aria-label="'+esc(areaName(a.id)+' '+u.name)+'"></td>').join('')+'</tr>').join('')+'</tbody></table><div class="hint">'+t('settings.defaultTeamHint')+'</div></div>':'';
-  return LCBSettingsPage({L,esc,t,team,admin:isAdmin(),legacy:legacySettings(),defaults,records:settingsRecords||esc(L({zh:'正在加载…',en:'Loading…',es:'Cargando…'})),integrity:integrityPanel(),version:APP_VERSION,latest:load(KEY.lang+':latestVersion',''),lastCheck:load(KEY.lang+':lastVersionCheck',0)});
+  return LCBSettingsPage({L,esc,t,team,navItems:navigationItems(),preferences:accountPreferences(),admin:isAdmin(),legacy:legacySettings(),defaults,records:settingsRecords||esc(L({zh:'正在加载…',en:'Loading…',es:'Cargando…'})),integrity:integrityPanel(),version:APP_VERSION,latest:load(KEY.lang+':latestVersion',''),lastCheck:load(KEY.lang+':lastVersionCheck',0)});
 }
 async function loadSettingsRecords(){
   if(!isAdmin()||settingsRecordsBusy)return;
@@ -3579,6 +3630,8 @@ function pageMarkup(content) {
 }
 
 function render() {
+  applyAccountTheme();
+  refreshAccountPreferences();
   const app = document.getElementById('app');
   const modalRoot = document.getElementById('modal-root');
   const route = (location.hash || '#/').slice(1);
@@ -4170,6 +4223,14 @@ document.addEventListener('click', async ev => {
   const el = ev.target.closest('[data-action]');
   if (!el) return;
   const action = el.getAttribute('data-action');
+  if(action==='reset-theme'){await saveAccountPreferences({...accountPreferences(),theme:null});return;}
+  if(action==='theme-preset'){
+    const preset=el.getAttribute('data-preset');
+    const colors={red:[217,45,32],green:[2,122,72],blue:[31,94,255],purple:[124,58,237],orange:[234,88,12],gradient:[217,45,32]};
+    const rgb=colors[preset];if(!rgb)return;
+    await saveAccountPreferences({...accountPreferences(),theme:{r:rgb[0],g:rgb[1],b:rgb[2],s:100,preset}});
+    return;
+  }
   if (action === 'force-update') { forceUpdate(); return; }
   if (action === 'close-version-notice') { versionNoticeClosed = true; render(); return; }
   if (action === 'check-update') {
@@ -5020,6 +5081,16 @@ document.addEventListener('submit', async ev => {
   if (!form) return;
   ev.preventDefault();
   const action = form.getAttribute('data-action');
+  if(action==='save-sidebar'){
+    const visible=new Set(Array.from(form.querySelectorAll('[name="visible"]:checked'),x=>x.value));
+    await saveAccountPreferences({...accountPreferences(),hidden:navigationItems().filter(x=>x[0]!=='#/settings'&&!visible.has(x[0])).map(x=>x[0])});
+    return;
+  }
+  if(action==='save-theme'){
+    const data=new FormData(form);
+    await saveAccountPreferences({...accountPreferences(),theme:{r:data.get('r'),g:data.get('g'),b:data.get('b'),s:data.get('s')}});
+    return;
+  }
   if(action==='global-search'){state.globalSearch=String(form.q.value||'').trim();render();return;}
   if(action==='calculate-deadline'){
     const data=readForm(form),start=parseISO(data.startDate),days=Math.max(0,Number(data.days)||0),holidays=String(data.holidays||'').split(/[,，\s]+/).map(x=>x.trim()).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x));
