@@ -21,7 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202610131554';
+const APP_VERSION = '202610131834';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
@@ -2449,7 +2449,7 @@ function shell(route, content) {
         <div class="mobile-drawer-account"><span class="avatar">${esc(u.short)}</span><span><b>${esc(u.name)}</b><small>${esc(t(u.roleKey))}</small></span><button class="btn btn-sm" type="button" data-action="logout">${esc(t('topbar.signout'))}</button></div>
       </div>
       <div class="topbar-right">
-        ${newerVersion?`<button class="btn btn-sm btn-primary" type="button" data-action="force-update">${esc(L({zh:'更新',en:'Update',es:'Actualizar'}))}</button>`:''}
+        ${newerVersion?`<button class="btn btn-sm btn-primary version-update-button" type="button" data-action="force-update">${esc(L({zh:'现在更新',en:'Update now',es:'Actualizar ahora'}))}</button>`:''}
         ${langSwitcher('topbar-lang')}
         ${syncBadge()}
         <div class="user-chip" aria-label="${esc(u.name)}" style="pointer-events:none;cursor:default">
@@ -3555,8 +3555,8 @@ function render() {
   const u = currentUser();
 
   if (!u) {
-    app.innerHTML = viewLogin();
-    modalRoot.innerHTML = '';
+    app.innerHTML = viewLogin() + (newerVersion ? `<button class="btn btn-primary login-version-update" type="button" data-action="force-update">${esc(L({zh:'现在更新',en:'Update now',es:'Actualizar ahora'}))}</button>` : '');
+    modalRoot.innerHTML = versionNotice();
     turnstileWidgetId = null;
     requestAnimationFrame(renderTurnstile);
     return;
