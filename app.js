@@ -21,17 +21,17 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202610131834';
+const APP_VERSION = '202610131926';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
   if (LOCAL_TEST_MODE) return false;
   try {
     const res = await fetch('./version.json?check=' + Date.now(), { cache: 'no-store' });
-    if (!res.ok) return false;
+    if (!res.ok) return null;
     const data = await res.json();
     if (data && String(data.version) > APP_VERSION) { newerVersion = String(data.version); render(); return true; }
-  } catch (_) { /* offline: keep the current page usable */ }
+  } catch (_) { return null; }
   return false;
 }
 function forceUpdate() {
@@ -3053,6 +3053,7 @@ function viewSettings() {
         <h1>${esc(t('settings.title'))}</h1>
         <div class="desc">${esc(t('settings.desc'))}</div>
       </div>
+      <div class="right"><button class="btn btn-primary" type="button" data-action="check-update">${esc(L({zh:'检查更新',en:'Check for updates',es:'Buscar actualizaciones'}))}</button></div>
     </div>
     <div class="detail-grid">
       <div>
@@ -4142,6 +4143,17 @@ document.addEventListener('click', async ev => {
   const action = el.getAttribute('data-action');
   if (action === 'force-update') { forceUpdate(); return; }
   if (action === 'close-version-notice') { versionNoticeClosed = true; render(); return; }
+  if (action === 'check-update') {
+    el.disabled=true;
+    el.textContent=L({zh:'正在检查…',en:'Checking…',es:'Buscando…'});
+    versionNoticeClosed=false;
+    const available=await checkForNewVersion();
+    if(available===false) toast(L({zh:'当前已是最新版本',en:'You are up to date',es:'Tienes la última versión'}));
+    if(available===null) toast(L({zh:'检查更新失败，请检查网络后重试',en:'Update check failed. Check your connection and try again.',es:'No se pudo buscar actualizaciones. Revisa tu conexión e inténtalo de nuevo.'}));
+    el.disabled=false;
+    el.textContent=L({zh:'检查更新',en:'Check for updates',es:'Buscar actualizaciones'});
+    return;
+  }
 
   switch (action) {
     case 'local-login': {
