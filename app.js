@@ -21,7 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202610142157';
+const APP_VERSION = '202610142256';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
@@ -2492,12 +2492,17 @@ const preferenceWrites=new Set();
 function preferenceKey(){const u=currentUser();return u?KEY.lang+':preferences:'+u.id:'';}
 function accountPreferences(){const key=preferenceKey();return LCBPersonalization.normalize(key?load(key,{}):{});}
 function applyAccountTheme(){
-  const value=accountPreferences().theme;
+  const preferences=accountPreferences();
+  const value=preferences.theme;
+  const dark=preferences.colorMode==='dark';
+  document.documentElement.classList.toggle('dark-mode',dark);
   const family=false;
   const theme=LCBPersonalization.theme(value,family);
   const style=document.documentElement.style;
   style.setProperty('--brand',theme.color);style.setProperty('--brand-soft',theme.soft);style.setProperty('--brand-gradient',theme.gradient);
   style.setProperty('--brand-text',theme.text);
+  style.colorScheme=dark?'dark':'light';
+  if(dark)style.setProperty('--brand-soft','color-mix(in srgb, '+theme.color+' 18%, #18222f)');
   document.documentElement.classList.toggle('custom-theme',!!value);
 }
 async function refreshAccountPreferences(){
@@ -2872,7 +2877,7 @@ function matterRowsHTML(completed=false) {
   }).join('');
   if(completed)return rows;
   const count=filterMatters().filter(LCBMatterCompletion.isCompleted).length;
-  return rows+(count?`<tr class="completed-section-heading"><td colspan="10"><button class="btn btn-ghost" type="button" data-action="toggle-completed-section" aria-expanded="${state.completedExpanded}">${state.completedExpanded?'▾':'▸'} ${esc(t('list.completedGroup'))} (${count}) · ${esc(t(state.completedExpanded?'detail.completedCollapse':'detail.completedExpand'))}</button></td></tr>${state.completedExpanded?matterRowsHTML(true):''}`:'');
+  return rows+(count?`<tr class="completed-section-heading"><td colspan="10" class="completed-section-cell"><button class="btn btn-ghost completed-section-toggle" type="button" data-action="toggle-completed-section" aria-expanded="${state.completedExpanded}">${state.completedExpanded?'▾':'▸'} ${esc(t('list.completedGroup'))} (${count}) · ${esc(t(state.completedExpanded?'detail.completedCollapse':'detail.completedExpand'))}</button></td></tr>${state.completedExpanded?matterRowsHTML(true):''}`:'');
 }
 
 function viewMatters() {
@@ -3365,6 +3370,7 @@ function guideDetails() {
   const details=all[state.guide.topic]||[];
   if(GUIDE_ROUTES[state.guide.topic]!=='#/settings')return details;
   return details.concat([
+    L({zh:'进入“设置 → 个性化 → 外观”，选择浅色或深色模式，调整主题色并保存。外观与侧边栏设置会随当前账户同步，不影响其他账户。',en:'Go to Settings → Personalization → Appearance, choose light or dark mode, adjust the colors and save. Appearance and sidebar settings sync with your account without affecting other accounts.',es:'Ve a Configuración → Personalización → Apariencia, elige el modo claro u oscuro, ajusta los colores y guarda. La apariencia y la barra lateral se sincronizan con tu cuenta sin afectar a otras cuentas.'}),
     L({zh:'进入“设置 → 信息与规则 → 业务类型”，点击“新建业务类型”添加类型，并勾选使用该类型时默认加入事项的成员。默认成员只影响新建事项。',en:'Go to Settings → Information and rules → Practice areas. Click Add practice area to create an area and select its default members. These defaults apply only to new matters.',es:'Ve a Configuración → Información y reglas → Áreas de práctica. Pulsa Añadir área de práctica para crear un área y elegir sus miembros predeterminados. Solo se aplican a asuntos nuevos.'}),
     L({"zh":"所有成员都能新建业务类型并设定默认成员；只有 Carol 能修改默认成员或删除类型。删除前要先修改所有使用该类型的事项，包括已完成和回收站中的事项。","en":"All members can add practice areas and choose their initial default members. Only Carol can change these defaults or delete an area. Before deleting, change all matters that use it, including completed matters and those in the recycle bin.","es":"Todos los miembros pueden añadir áreas de práctica y elegir sus miembros predeterminados iniciales. Solo Carol puede cambiar estos valores o eliminar un área. Antes de eliminarla, cambia todos los asuntos que la usan, incluidos los completados y los de la papelera."})
   ]);
@@ -3557,7 +3563,7 @@ async function removeEncryptedAttachment(id,index) {
 function renderModal() {
   const mo = state.modal;
   if (!mo) return '';
-  if (mo.type === 'practice-area') return modalFrame(t('areas.add'),LCBPracticeAreas.form({L,esc,users:USERS}),'<button class="btn" data-action="close-modal">'+esc(t('modal.cancel'))+'</button><button class="btn btn-primary" type="submit" form="practice-area-form">'+esc(t('clients.save'))+'</button>');
+  if (mo.type === 'practice-area') return modalFrame(t('areas.add'),LCBPracticeAreas.form({L,esc,users:USERS}),'<button class="btn" data-action="close-modal">'+esc(t('modal.cancel'))+'</button><button class="btn btn-primary" type="submit" form="practice-area-form">'+esc(L({zh:'保存业务类型',en:'Save practice area',es:'Guardar área de práctica'}))+'</button>');
   if (mo.type === 'new-matter') return modalNewMatter();
   if (mo.type === 'calendar-choice') return modalCalendarChoice(mo);
   if (mo.type === 'schedule-reminder') return modalScheduleReminder(mo);
@@ -3645,6 +3651,16 @@ function modalNewMatter() {
           <div class="grid-2">
             <div class="field"><label class="req">${esc(t('detail.client'))}</label>${clientField}</div>
             <div class="field"><label class="req">${esc(t('detail.title'))}</label><input name="title" required></div>
+            <div class="field"><label class="req">${esc(t('detail.area'))}</label>${areaField}</div>
+            <div class="field"><label class="req">${esc(t('detail.owner'))}</label><select name="owner">${ownerOpts}</select></div>
+            <div class="field"><label class="req">${esc(t('detail.stage'))}</label>${stageField}</div>
+            <div class="field"><label class="req">${esc(t('detail.next'))}</label><input name="next" required></div>
+            <div class="field"><label>${esc(t('detail.dueMode'))}</label><select name="dueMode"><option value="date" selected>${esc(t('detail.dueDate'))}</option><option value="asap">${esc(t('detail.dueAsap'))}</option><option value="none">${esc(t('detail.dueNone'))}</option></select></div>
+            <div class="field"><label>${esc(t('detail.due'))}</label><input type="date" name="due" value="${esc(state.modal.due || '')}"></div>
+            <div class="field"><label>${esc(ft('recurrence'))}</label><select name="recurrence"><option value="none">${esc(ft('recurrenceNone'))}</option><option value="weekly">${esc(ft('recurrenceWeekly'))}</option><option value="monthly">${esc(ft('recurrenceMonthly'))}</option></select></div>
+            <div class="field"><label>${esc(ft('recurrenceUntil'))}</label><input type="date" name="recurrenceUntil"></div>
+            <div class="field"><label class="req">${esc(t('detail.status'))}</label><select name="status">${statusOpts}</select></div>
+            <div class="field"><label>${esc(t('detail.reason'))}</label><input name="reason" autocomplete="off" value="" placeholder="${esc(t('form.reasonPh'))}"></div>
             <div class="field"><label>${esc(t('detail.counterparties'))}</label><input name="counterparties"></div>
             <div class="field"><label>${esc(t('detail.relatedParties'))}</label><input name="relatedParties"></div>
             <div class="field"><label>${esc(t('detail.priority'))}</label><input name="priority"></div>
@@ -3654,21 +3670,10 @@ function modalNewMatter() {
             <div class="field"><label>${esc(t('detail.balance'))}</label><input name="balance"></div>
             <div class="field"><label>${esc(t('detail.contactName'))}</label><input name="contactName"></div>
             <div class="field"><label>${esc(t('detail.contactEmail'))}</label><input name="contactEmail"></div>
-            <div class="field"><label class="req">${esc(t('detail.area'))}</label>${areaField}</div>
-            <div class="field"><label class="req">${esc(t('detail.owner'))}</label><select name="owner">${ownerOpts}</select></div>
-            <div class="field"><label class="req">${esc(t('detail.stage'))}</label>${stageField}</div>
-            <div class="field"><label class="req">${esc(t('detail.status'))}</label><select name="status">${statusOpts}</select></div>
-            <div class="field"><label>${esc(t('detail.dueMode'))}</label><select name="dueMode"><option value="date" selected>${esc(t('detail.dueDate'))}</option><option value="asap">${esc(t('detail.dueAsap'))}</option><option value="none">${esc(t('detail.dueNone'))}</option></select></div>
-            <div class="field"><label>${esc(t('detail.due'))}</label><input type="date" name="due" value="${esc(state.modal.due || '')}"></div>
             <div class="field"><label>${esc(t('detail.waiting'))}</label>${waitField}</div>
-            <div class="field"><label>${esc(ft('recurrence'))}</label><select name="recurrence"><option value="none">${esc(ft('recurrenceNone'))}</option><option value="weekly">${esc(ft('recurrenceWeekly'))}</option><option value="monthly">${esc(ft('recurrenceMonthly'))}</option></select></div>
-            <div class="field"><label>${esc(ft('recurrenceUntil'))}</label><input type="date" name="recurrenceUntil"></div>
           </div>
           <div class="field"><label>${esc(t('detail.background'))}</label><textarea name="background" rows="4"></textarea></div>
-          <div class="field"><label class="req">${esc(t('detail.next'))}</label><input name="next" required></div>
           <div class="field"><label>${esc(t('detail.nextOwner'))}</label><select name="nextOwner">${nextOwnerOpts}</select></div>
-          <div class="field"><label>${esc(t('detail.reason'))}</label>
-            <input name="reason" autocomplete="off" value="" placeholder="${esc(t('form.reasonPh'))}"></div>
           <div class="field"><label>${esc(t('detail.notes'))}</label><textarea name="notes" rows="3"></textarea></div>
           <div class="field"><label>${esc(t('detail.members'))}</label>
             <div class="member-list">
@@ -5199,7 +5204,7 @@ document.addEventListener('submit', async ev => {
   }
   if(action==='save-theme'){
     const data=new FormData(form);
-    await saveAccountPreferences({theme:{r:data.get('r'),g:data.get('g'),b:data.get('b'),s:data.get('s')}});
+    await saveAccountPreferences({colorMode:data.get('colorMode'),theme:{r:data.get('r'),g:data.get('g'),b:data.get('b'),s:data.get('s'),preset:data.get('preset')}});
     return;
   }
   if(action==='global-search'){state.globalSearch=String(form.q.value||'').trim();render();return;}
