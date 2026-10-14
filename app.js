@@ -21,7 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202610142256';
+const APP_VERSION = '202610142323';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
@@ -4315,7 +4315,7 @@ document.addEventListener('click', async ev => {
   if(action==='reset-theme'){await saveAccountPreferences({theme:null});return;}
   if(action==='theme-preset'){
     const preset=el.getAttribute('data-preset');
-    const colors={red:[217,45,32],green:[2,122,72],blue:[31,94,255],purple:[124,58,237],orange:[234,88,12],gradient:[217,45,32]};
+    const colors={red:[217,45,32],orange:[234,88,12],yellow:[250,204,21],green:[2,122,72],cyan:[6,182,212],blue:[31,94,255],purple:[124,58,237],gradient:[217,45,32]};
     const rgb=colors[preset];if(!rgb)return;
     await saveAccountPreferences({theme:{r:rgb[0],g:rgb[1],b:rgb[2],s:100,preset}});
     return;
