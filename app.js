@@ -21,7 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202610142323';
+const APP_VERSION = '202610142340';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
@@ -2486,6 +2486,10 @@ function syncBadge() {
 /* ------------------------------ 视图：外壳 ------------------------------ */
 
 const preferenceChecks=new Map();
+const systemAppearance=globalThis.matchMedia?globalThis.matchMedia('(prefers-color-scheme: dark)'):null;
+const updateSystemAppearance=()=>{if(accountPreferences().colorMode==='system')applyAccountTheme();};
+if(systemAppearance?.addEventListener)systemAppearance.addEventListener('change',updateSystemAppearance);
+else if(systemAppearance?.addListener)systemAppearance.addListener(updateSystemAppearance);
 const preferenceRevisions=new Map();
 setInterval(()=>refreshAccountPreferences(),30000);
 const preferenceWrites=new Set();
@@ -2494,7 +2498,7 @@ function accountPreferences(){const key=preferenceKey();return LCBPersonalizatio
 function applyAccountTheme(){
   const preferences=accountPreferences();
   const value=preferences.theme;
-  const dark=preferences.colorMode==='dark';
+  const dark=preferences.colorMode==='dark'||(preferences.colorMode==='system'&&!!systemAppearance?.matches);
   document.documentElement.classList.toggle('dark-mode',dark);
   const family=false;
   const theme=LCBPersonalization.theme(value,family);
@@ -3370,7 +3374,7 @@ function guideDetails() {
   const details=all[state.guide.topic]||[];
   if(GUIDE_ROUTES[state.guide.topic]!=='#/settings')return details;
   return details.concat([
-    L({zh:'进入“设置 → 个性化 → 外观”，选择浅色或深色模式，调整主题色并保存。外观与侧边栏设置会随当前账户同步，不影响其他账户。',en:'Go to Settings → Personalization → Appearance, choose light or dark mode, adjust the colors and save. Appearance and sidebar settings sync with your account without affecting other accounts.',es:'Ve a Configuración → Personalización → Apariencia, elige el modo claro u oscuro, ajusta los colores y guarda. La apariencia y la barra lateral se sincronizan con tu cuenta sin afectar a otras cuentas.'}),
+    L({zh:'进入“设置 → 个性化 → 外观”，选择浅色、深色或跟随系统，调整主题色并保存。“跟随系统”会随系统外观实时切换。外观与侧边栏设置会随当前账户同步，不影响其他账户。',en:'Go to Settings → Personalization → Appearance, choose Light, Dark or Follow system, adjust the colors and save. Follow system responds to changes in your device’s appearance. Appearance and sidebar settings sync with your account without affecting other accounts.',es:'Ve a Configuración → Personalización → Apariencia, elige Claro, Oscuro o Según el sistema, ajusta los colores y guarda. Según el sistema responde a los cambios de apariencia del dispositivo. La apariencia y la barra lateral se sincronizan con tu cuenta sin afectar a otras cuentas.'}),
     L({zh:'进入“设置 → 信息与规则 → 业务类型”，点击“新建业务类型”添加类型，并勾选使用该类型时默认加入事项的成员。默认成员只影响新建事项。',en:'Go to Settings → Information and rules → Practice areas. Click Add practice area to create an area and select its default members. These defaults apply only to new matters.',es:'Ve a Configuración → Información y reglas → Áreas de práctica. Pulsa Añadir área de práctica para crear un área y elegir sus miembros predeterminados. Solo se aplican a asuntos nuevos.'}),
     L({"zh":"所有成员都能新建业务类型并设定默认成员；只有 Carol 能修改默认成员或删除类型。删除前要先修改所有使用该类型的事项，包括已完成和回收站中的事项。","en":"All members can add practice areas and choose their initial default members. Only Carol can change these defaults or delete an area. Before deleting, change all matters that use it, including completed matters and those in the recycle bin.","es":"Todos los miembros pueden añadir áreas de práctica y elegir sus miembros predeterminados iniciales. Solo Carol puede cambiar estos valores o eliminar un área. Antes de eliminarla, cambia todos los asuntos que la usan, incluidos los completados y los de la papelera."})
   ]);
