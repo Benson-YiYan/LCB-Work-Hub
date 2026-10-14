@@ -21,7 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202610140818';
+const APP_VERSION = '202610140920';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
