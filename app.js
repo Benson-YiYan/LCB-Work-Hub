@@ -21,7 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202610171658';
+const APP_VERSION = '202610171716';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
@@ -368,6 +368,7 @@ const STR = {
   'login.errNoUser': ['没有找到这个邮箱对应的成员。', 'No team member matches that email.', 'No hay ningún miembro con ese correo.'],
   'login.errBadPass': ['密码错误，还剩 {n} 次机会！', 'Incorrect password. {n} attempts remaining!', 'Contraseña incorrecta. ¡Quedan {n} intentos!'],
   'login.errExpired': ['登录已过期，请重新登录。', 'Your session expired. Please sign in again.', 'Tu sesión ha caducado. Inicia sesión de nuevo.'],
+  'login.errService': ['登录未完成（{code}）。请重试；如果仍失败，请把此提示发给 Benson。', 'Sign-in could not be completed ({code}). Please retry. If it still fails, send this message to Benson.', 'No se pudo completar el inicio de sesión ({code}). Vuelve a intentarlo. Si sigue fallando, envía este mensaje a Benson.'],
   'login.errCooldown': ['密码连续输错，请 {n} 秒后再试。', 'Too many failed attempts. Try again in {n} seconds.', 'Demasiados intentos fallidos. Inténtalo de nuevo en {n} segundos.'],
   'toast.welcome': ['欢迎回来，{name}', 'Welcome back, {name}', 'Bienvenido de nuevo, {name}'],
 
@@ -5305,7 +5306,11 @@ document.addEventListener('submit', async ev => {
         loginFailures = LOGIN_FAILURE_LIMIT - remaining;
         state.loginError=t('login.errBadPass', { n: remaining });
       }
-      else throw e;
+      else {
+        // Login does not display the normal in-app notice modal. Keep failures
+        // visible here instead of passing them to an invisible global modal.
+        state.loginError = t('login.errService', { code: String(e && (e.code || e.message) || 'unknown').slice(0, 160) });
+      }
       render(); return;
     }
     state.loginError = '';
