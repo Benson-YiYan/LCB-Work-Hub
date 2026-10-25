@@ -43,8 +43,16 @@ Deno.serve(async (request) => {
   lockQuery.searchParams.set('email', `eq.${email}`);
   lockQuery.searchParams.set('device_id', `eq.${deviceId}`);
   lockQuery.searchParams.set('limit', '1');
-  const lockResponse = await fetch(lockQuery, { headers: serviceHeaders });
-  if (!lockResponse.ok) return json({ error: 'lock_check_failed' }, 500);
+  let lockResponse: Response | null = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      lockResponse = await fetch(lockQuery, { headers: serviceHeaders });
+      if (lockResponse.ok) break;
+    } catch (_) {
+      // A transient REST/network failure should get one quick retry.
+    }
+  }
+  if (!lockResponse || !lockResponse.ok) return json({ error: 'lock_check_failed' }, 500);
   const rows = await lockResponse.json();
   const activeLock = rows[0];
   const lockedUntil = activeLock?.locked_until ? Date.parse(activeLock.locked_until) : 0;
