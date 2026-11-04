@@ -21,7 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202610171716';
+const APP_VERSION = '202611041549';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
@@ -440,7 +440,7 @@ const STR = {
   'modal.import.no': ['否', 'No', 'No'],
   'modal.import.sample': ['示例文件', 'Sample file', 'Archivo de ejemplo'],
   'modal.export.title': ['导出CSV表格', 'Export CSV', 'Exportar CSV'],
-  'modal.export.body': ['CSV 表格可用 Excel 打开。', 'You can open CSV files in Excel.', 'Puedes abrir los archivos CSV en Excel.'],
+  'modal.export.body': ['提示：下载的CSV表格可以用Excel打开。', 'Tip: The downloaded CSV file can be opened in Excel.', 'Aviso: El archivo CSV descargado se puede abrir en Excel.'],
   'modal.export.confirm': ['下载CSV表格', 'Download CSV', 'Descargar CSV'],
   'list.search': ['搜索客户、事项、这一步', 'Search client, matter, current step', 'Buscar cliente, asunto, paso actual'],
   'list.allAreas': ['全部业务类型', 'All practice areas', 'Todas las áreas'],
@@ -962,6 +962,7 @@ const STR = {
 
   'csv.filename': ['Matter总表.csv', 'Matter-board.csv', 'Tablero-de-asuntos.csv'],
   'csv.no': ['编号', 'No.', 'Nº'],
+  'csv.completedSuffix': ['（已完成）', ' (Completed)', ' (Completado)'],
   'csv.client': ['客户', 'Client', 'Cliente'],
   'csv.counterparties': ['对方当事人', 'Opposing parties', 'Contrapartes'],
   'csv.relatedParties': ['关联方', 'Related parties', 'Partes relacionadas'],
@@ -4295,7 +4296,7 @@ function exportCSV(onlyId) {
     'csv.next', 'csv.nextOwner', 'csv.due', 'csv.waiting', 'csv.lastContact', 'csv.background', 'csv.priority', 'csv.startDate',
     'csv.totalFee', 'csv.paymentsReceived', 'csv.balance', 'csv.contactName', 'csv.contactEmail', 'csv.notes'].map(k => t(k));
   const rows = list.map(m => [
-    m.no, L(m.client), m.counterparties || '', m.relatedParties || '', L(m.title), areaName(m.area), USER[m.owner].name,
+    m.no, L(m.client), m.counterparties || '', m.relatedParties || '', LCBMatterCompletion.exportTitle(L(m.title), m, t('csv.completedSuffix')), areaName(m.area), USER[m.owner].name,
     statusName(m.status), stageLabel(m.stage), L(m.next), USER[m.nextOwner] ? USER[m.nextOwner].name : m.nextOwner,
     m.due, waitLabel(m.waiting), m.lastContact, m.background || '', m.priority || '', m.startDate || '',
     m.totalFee || '', m.paymentsReceived || '', m.balance || '', m.contactName || '', m.contactEmail || '', L(m.notes),

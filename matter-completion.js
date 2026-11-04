@@ -4,6 +4,9 @@
   root.LCBMatterCompletion = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   function isCompleted(matter) { return !!(matter && matter.completedAt); }
+  function exportTitle(title, matter, completedSuffix) {
+    return isCompleted(matter) ? `${title}${completedSuffix}` : title;
+  }
   function completedLast(list) {
     return [...(list || [])].sort((a, b) => Number(isCompleted(a)) - Number(isCompleted(b)) || Number(a.completedAt || 0) - Number(b.completedAt || 0));
   }
@@ -24,5 +27,5 @@
   function deletableCompleted(list,user){
     return (list||[]).filter(m=>!m.deletedAt&&!['schedule','client','chat-channel'].includes(m.kind)&&canDeleteCompleted(user,m));
   }
-  return { isCompleted, completedLast, canComplete, canDeleteCompleted, completeMatter, deletableCompleted };
+  return { isCompleted, exportTitle, completedLast, canComplete, canDeleteCompleted, completeMatter, deletableCompleted };
 });
