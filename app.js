@@ -21,7 +21,7 @@ const KEY = {
   tutorialCompleted: 'lcb_tutorial_completed_v1',
   deviceId: 'lcb_device_id_v1',
 };
-const APP_VERSION = '202611041549';
+const APP_VERSION = '202611041602';
 let newerVersion = '';
 let versionNoticeClosed = false;
 async function checkForNewVersion() {
@@ -962,7 +962,7 @@ const STR = {
 
   'csv.filename': ['Matter总表.csv', 'Matter-board.csv', 'Tablero-de-asuntos.csv'],
   'csv.no': ['编号', 'No.', 'Nº'],
-  'csv.completedSuffix': ['（已完成）', ' (Completed)', ' (Completado)'],
+  'csv.completedPrefix': ['（已完成）', '(Completed) ', '(Completado) '],
   'csv.client': ['客户', 'Client', 'Cliente'],
   'csv.counterparties': ['对方当事人', 'Opposing parties', 'Contrapartes'],
   'csv.relatedParties': ['关联方', 'Related parties', 'Partes relacionadas'],
@@ -4292,11 +4292,11 @@ function saveMatterFromDom(id) {
 function exportCSV(onlyId) {
   const u = currentUser();
   const list = onlyId ? [matterById(onlyId)].filter(Boolean) : sorted(filterMatters());
-  const head = ['csv.no', 'csv.client', 'csv.counterparties', 'csv.relatedParties', 'csv.title', 'csv.area', 'csv.owner', 'csv.status', 'csv.stage',
+  const head = ['csv.no', 'csv.title', 'csv.client', 'csv.counterparties', 'csv.relatedParties', 'csv.area', 'csv.owner', 'csv.status', 'csv.stage',
     'csv.next', 'csv.nextOwner', 'csv.due', 'csv.waiting', 'csv.lastContact', 'csv.background', 'csv.priority', 'csv.startDate',
     'csv.totalFee', 'csv.paymentsReceived', 'csv.balance', 'csv.contactName', 'csv.contactEmail', 'csv.notes'].map(k => t(k));
   const rows = list.map(m => [
-    m.no, L(m.client), m.counterparties || '', m.relatedParties || '', LCBMatterCompletion.exportTitle(L(m.title), m, t('csv.completedSuffix')), areaName(m.area), USER[m.owner].name,
+    m.no, LCBMatterCompletion.exportTitle(L(m.title), m, t('csv.completedPrefix')), L(m.client), m.counterparties || '', m.relatedParties || '', areaName(m.area), USER[m.owner].name,
     statusName(m.status), stageLabel(m.stage), L(m.next), USER[m.nextOwner] ? USER[m.nextOwner].name : m.nextOwner,
     m.due, waitLabel(m.waiting), m.lastContact, m.background || '', m.priority || '', m.startDate || '',
     m.totalFee || '', m.paymentsReceived || '', m.balance || '', m.contactName || '', m.contactEmail || '', L(m.notes),

@@ -8,7 +8,7 @@ assert.ok(Completion, 'matter completion behavior must exist');
 const active = { id:'1', owner:'carol', nextOwner:'carlos', title:'Active' };
 const finished = { id:'2', owner:'carol', nextOwner:'carlos', title:'Finished', completedAt:100 };
 assert.deepEqual(Completion.completedLast([finished, active]).map(m => m.id), ['1', '2'], 'completed matters sink below active matters');
-assert.equal(Completion.exportTitle('拖地', finished, '（已完成）'), '拖地（已完成）', 'completed export titles include the completion marker');
+assert.equal(Completion.exportTitle('拖地', finished, '（已完成）'), '（已完成）拖地', 'completed export titles prefix the completion marker');
 assert.equal(Completion.exportTitle('拖地', active, '（已完成）'), '拖地', 'active export titles remain unchanged');
 assert.equal(Completion.canComplete({ id:'carlos' }, active), true, 'last-step owner can complete the matter');
 assert.equal(Completion.canComplete({ id:'carol' }, active), false, 'matter owner cannot complete another member’s final step');

@@ -4,8 +4,8 @@
   root.LCBMatterCompletion = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   function isCompleted(matter) { return !!(matter && matter.completedAt); }
-  function exportTitle(title, matter, completedSuffix) {
-    return isCompleted(matter) ? `${title}${completedSuffix}` : title;
+  function exportTitle(title, matter, completedPrefix) {
+    return isCompleted(matter) ? `${completedPrefix}${title}` : title;
   }
   function completedLast(list) {
     return [...(list || [])].sort((a, b) => Number(isCompleted(a)) - Number(isCompleted(b)) || Number(a.completedAt || 0) - Number(b.completedAt || 0));
